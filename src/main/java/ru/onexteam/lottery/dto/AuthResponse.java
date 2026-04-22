@@ -1,4 +1,4 @@
-package ru.yourteam.lottery.dto;
+package ru.onexteam.lottery.dto;
 
 public class AuthResponse {
     public String token;
