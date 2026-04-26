@@ -10,18 +10,6 @@ public class DrawController {
 
     public static void register(Javalin app) {
 
-        // Создать тираж (роль: админ).
-        app.post("/api/draws", ctx -> {
-            // TODO: логика создания тиража админом.
-        });
-
-        // Закрыть тираж (роль: админ).
-        app.post("/api/draws/{drawId}/close", ctx -> {
-            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может кинуть NumberFormatException.
-
-            // TODO: при закрытии тиража получение билетов становится невозможным и сразу определяется победная комбинация.
-        });
-
         // Получить список тиражей.
         // /api/draws?status=active
         app.get("/api/draws", ctx -> {
@@ -47,6 +35,18 @@ public class DrawController {
             long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может кинуть NumberFormatException.
 
             // TODO: логика получения результата для тиража по его id - ctx.json(drawService.getResult(drawId));
+        });
+
+        // Создать тираж (роль: админ).
+        app.post("/api/draws", ctx -> {
+            // TODO: логика создания тиража админом.
+        });
+
+        // Закрыть тираж (роль: админ).
+        app.post("/api/draws/{drawId}/close", ctx -> {
+            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может кинуть NumberFormatException.
+
+            // TODO: при закрытии тиража получение билетов становится невозможным и сразу определяется победная комбинация.
         });
 
     }
