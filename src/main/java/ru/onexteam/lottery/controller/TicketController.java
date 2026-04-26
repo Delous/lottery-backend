@@ -10,15 +10,6 @@ public class TicketController {
 
     public static void register(Javalin app) {
 
-        // Купить билет (роль: пользователь).
-        app.post("/api/draws/{drawId}/tickets", ctx -> {
-            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может выкинуть NumberFormatException.
-
-            // Из JWT брать id пользователя.
-
-            // TODO: логика приобретения (создания) билета - ctx.json(ticketService.createTicket(userId, drawId, req));.
-        });
-
         // Получение всех билетов пользователя по id.
         app.get("/api/me/tickets", ctx -> {
             // Из JWT брать id пользователя, который сейчас авторизован.
@@ -33,6 +24,15 @@ public class TicketController {
         // Получение результата билета по id.
         app.get("/api/me/tickets/{ticketId}/result", ctx -> {
             // TODO: логика получения результата для билета по id - ctx.json(ticketService.getTicketResult(userId, ticketId));
+        });
+
+        // Купить билет (роль: пользователь).
+        app.post("/api/draws/{drawId}/tickets", ctx -> {
+            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может выкинуть NumberFormatException.
+
+            // Из JWT брать id пользователя.
+
+            // TODO: логика приобретения (создания) билета - ctx.json(ticketService.createTicket(userId, drawId, req));.
         });
 
     }
