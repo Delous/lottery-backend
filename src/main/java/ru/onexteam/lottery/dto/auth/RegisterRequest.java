@@ -1,4 +1,4 @@
-package ru.onexteam.lottery.dto;
+package ru.onexteam.lottery.dto.auth;
 
 public class RegisterRequest {
     public String email;
