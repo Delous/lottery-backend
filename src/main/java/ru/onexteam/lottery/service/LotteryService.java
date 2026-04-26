@@ -45,6 +45,7 @@ public class LotteryService {
         result.drawId = drawId;
         result.winningCombination = winningCombination;
 
+        //Сохраняем итог розыгрыша id тиража и выигрышную комбинацию
         drawResultRepository.save(result);
         return result;
     }

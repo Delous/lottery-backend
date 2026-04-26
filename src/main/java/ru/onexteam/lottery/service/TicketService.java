@@ -14,6 +14,8 @@ public class TicketService {
 
     //создание билета
     public Ticket createTicket(Long userId, Long drawId, String combination) {
+
+        //Получаем тираж по id-проверяем что он существует и ещё активен
         Draw draw = drawRepository.findById(drawId);
 
         if (draw == null) {
@@ -33,12 +35,15 @@ public class TicketService {
         ticket.combination = combination;
         ticket.status = "PENDING";
 
+        //Сохраняем новый билет с комбинацией пользователя и статусом "PENDING"
         ticketRepository.save(ticket);
         return ticket;
     }
 
     //проверка всех билетов после розыгрыша тиража
     public void chekAllTickets(Long DrawId, List<Integer>  winningNumbers) {
+
+        //Получаем все билеты этого тиража
         List<Ticket> tickets = ticketRepository.findByDrawId(drawId);
 
         for (Ticket ticket : tickets) {
@@ -49,12 +54,16 @@ public class TicketService {
             } else {
                 ticket.status = "LOSE";
             }
+
+            //Обновляем статус каждого билета "WIN" или "LOSE"
             ticketRepository.update(ticket);
         }
     }
 
     //получить результат конкретного билета
     public Ticket getTicketResult(Long ticketId) {
+
+        //Получаем билет по id чтобы пользователь мог узнать свой результат
         Ticket ticket = ticketRepository.findById(ticketId);
         if (ticket == null) {
             throw new IllegalArgumentException("Билет не найден");
