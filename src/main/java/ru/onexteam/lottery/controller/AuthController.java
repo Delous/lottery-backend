@@ -7,7 +7,8 @@ public class AuthController {
 
     public static void register(Javalin app, AuthService service) {
 
-        app.post("/auth/register", ctx -> {
+        // Зарегистрировать пользователя.
+        app.post("/api/auth/register", ctx -> {
             String email = ctx.formParam("email");
             String password = ctx.formParam("password");
 
@@ -15,12 +16,15 @@ public class AuthController {
             ctx.result(result);
         });
 
-        app.post("/auth/login", ctx -> {
+        // Авторизация пользователя.
+        app.post("/api/auth/login", ctx -> {
             String email = ctx.formParam("email");
             String password = ctx.formParam("password");
 
             String token = service.login(email, password);
             ctx.result(token);
         });
+
     }
+
 }

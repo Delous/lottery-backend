@@ -10,15 +10,43 @@ public class DrawController {
 
     public static void register(Javalin app) {
 
+        // Создать тираж (роль: админ).
         app.post("/api/draws", ctx -> {
-            // TODO: AuthMiddleware проверка роли (требуемое значение "admin").
-            CreateDrawRequest req = ctx.bodyAsClass(CreateDrawRequest.class);
-            String result = drawService.createDraw(req.title);
-            ctx.status(201).json(result);
+            // TODO: логика создания тиража админом.
         });
 
-        app.get("/api/draws/active", ctx -> {
-            ctx.json(drawService.getActiveDraws());
+        // Закрыть тираж (роль: админ).
+        app.post("/api/draws/{drawId}/close", ctx -> {
+            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может кинуть NumberFormatException.
+
+            // TODO: при закрытии тиража получение билетов становится невозможным и сразу определяется победная комбинация.
+        });
+
+        // Получить список тиражей.
+        // /api/draws?status=active
+        app.get("/api/draws", ctx -> {
+            String status = ctx.queryParam("status");
+
+            if ("active".equals(status)) {
+                ctx.json(drawService.getActiveDraws());
+                return;
+            }
+
+            // TODO: логика получения всех тиражей - ctx.json(drawService.getAllDraws());
+        });
+
+        // Получить тираж по id.
+        app.get("/api/draws/{drawId}", ctx -> {
+            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может кинуть NumberFormatException.
+
+            // TODO: логика получения тиража по id - ctx.json(drawService.getById(drawId));
+        });
+
+        // Получить результат тиража.
+        app.get("/api/draws/{drawId}/result", ctx -> {
+            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может кинуть NumberFormatException.
+
+            // TODO: логика получения результата для тиража по его id - ctx.json(drawService.getResult(drawId));
         });
 
     }

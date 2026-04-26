@@ -10,12 +10,29 @@ public class TicketController {
 
     public static void register(Javalin app) {
 
+        // Купить билет (роль: пользователь).
         app.post("/api/draws/{drawId}/tickets", ctx -> {
-            // TODO: AuthMiddleware проверка роли (требуемое значение "user").
-            Long userId = ctx.attribute("userId");
-            CreateTicketRequest req = ctx.bodyAsClass(CreateTicketRequest.class);
-            String result = ticketService.createTicket(userId, req.drawId);
-            ctx.status(201).json(result);
+            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может выкинуть NumberFormatException.
+
+            // Из JWT брать id пользователя.
+
+            // TODO: логика приобретения (создания) билета - ctx.json(ticketService.createTicket(userId, drawId, req));.
+        });
+
+        // Получение всех билетов пользователя по id.
+        app.get("/api/me/tickets", ctx -> {
+            // Из JWT брать id пользователя, который сейчас авторизован.
+            // TODO: логика получения билетов для пользователя - ctx.json(ticketService.getUserTickets(userId));
+        });
+
+        // Получение билета по id.
+        app.get("/api/me/tickets/{ticketId}", ctx -> {
+            // TODO: логика получения билета по id - ctx.json(ticketService.getTicket(userId, ticketId));
+        });
+
+        // Получение результата билета по id.
+        app.get("/api/me/tickets/{ticketId}/result", ctx -> {
+            // TODO: логика получения результата для билета по id - ctx.json(ticketService.getTicketResult(userId, ticketId));
         });
 
     }
