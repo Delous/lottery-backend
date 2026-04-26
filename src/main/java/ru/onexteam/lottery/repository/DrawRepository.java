@@ -15,10 +15,11 @@ public class DrawRepository extends BaseRepository {
 
     private static final String INSERT_SQL = "insert into draws (title, status) values (?, ?)";
     private static final String FIND_BY_ID_SQL = "select id, title, status from draws where id = ?";
-    private static final String FIND_ACTIVE_SQL = "select id, title, status from draws where status = 'ACTIVE' order by id desc";
-    private static final String UPDATE_STATUS_SQL = """
+    private static final String FIND_BY_STATUS_SQL = "select id, title, status from draws where status = ? order by id desc";
+    private static final String UPDATE_SQL = """
             update draws
-            set status = ?,
+            set title = ?,
+                status = ?,
                 finished_at = case when ? = 'FINISHED' then current_timestamp else finished_at end
             where id = ?
             """;
@@ -54,25 +55,27 @@ public class DrawRepository extends BaseRepository {
         }
     }
 
-    public List<Draw> findActive() {
+    public List<Draw> findByStatus(String status) {
         try (var connection = DbConfig.getConnection();
-             var statement = connection.prepareStatement(FIND_ACTIVE_SQL)) {
+             var statement = connection.prepareStatement(FIND_BY_STATUS_SQL)) {
+            statement.setString(1, status);
             return findMany(statement, this::mapRow);
         } catch (SQLException e) {
-            throw new RuntimeException("Не удалось загрузить список активных тиражей", e);
+            throw new RuntimeException("Не удалось загрузить тиражи по статусу", e);
         }
     }
 
-    public void updateStatus(Long drawId, String status) {
+    public void update(Draw draw) {
         try (var connection = DbConfig.getConnection();
-             var statement = connection.prepareStatement(UPDATE_STATUS_SQL)) {
+             var statement = connection.prepareStatement(UPDATE_SQL)) {
 
-            statement.setString(1, status);
-            statement.setString(2, status);
-            statement.setLong(3, drawId);
+            statement.setString(1, draw.title);
+            statement.setString(2, draw.status);
+            statement.setString(3, draw.status);
+            statement.setLong(4, draw.id);
             statement.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Не удалось обновить статус тиража", e);
+            throw new RuntimeException("Не удалось обновить тираж", e);
         }
     }
 
