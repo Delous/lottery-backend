@@ -23,7 +23,23 @@
 hs_err_pid*
 replay_pid*
 
+# Maven
 target/
+
+#Giga IDEA
 .gigaide/
-.idea/
+target/
 node_modules/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
