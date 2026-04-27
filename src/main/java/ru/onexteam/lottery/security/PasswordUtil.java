@@ -15,7 +15,6 @@ public class PasswordUtil {
     public boolean verifyPassword(String rawPassword, String hashedPassword) {
         boolean verified = Password.check(rawPassword, hashedPassword)
                 .withArgon2();
-        //return rawPassword.equals(hashedPassword);
         return verified;
     }
 }
