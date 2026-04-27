@@ -26,6 +26,11 @@ replay_pid*
 # Maven
 target/
 
+#Giga IDEA
+.gigaide/
+target/
+node_modules/
+
 # IntelliJ IDEA
 .idea/
 *.iml
@@ -37,3 +42,4 @@ out/
 # OS files
 .DS_Store
 Thumbs.db
+
