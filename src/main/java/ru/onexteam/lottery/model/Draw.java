@@ -4,5 +4,4 @@ public class Draw {
     public Long id;
     public String title;
     public String status; // ACTIVE / FINISHED
-    public String winningCombination;
 }

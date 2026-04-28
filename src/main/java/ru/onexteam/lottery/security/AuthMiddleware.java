@@ -11,6 +11,21 @@ public class AuthMiddleware {
     }
 
     public void register(Javalin app) {
+        app.before("/admin/*", ctx -> { // Поменять /admin/* на ссылку по факту
+            String token = ctx.header("Authorization");
+            if(token == null){
+                // Ошибка нужно авторизоваться
+            }else if (!jwtUtil.validateToken(token)) {
+                // Ошибка токен не верный
+            }
+
+        });
+        app.get("/admin/*", ctx -> {
+            String token = ctx.header("Authorization"); // Поменять /admin/* на ссылку по факту
+            Long userId = jwtUtil.extractUserId(token);
+            String userRole = jwtUtil.extractRole(token);
+            // Куда вернуть?
+        });
         // добавить before-handler
     }
 }
