@@ -6,8 +6,10 @@ import ru.onexteam.lottery.repository.DrawRepository;
 import ru.onexteam.lottery.repository.TicketRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public class TicketService {
+
 
     private final TicketRepository ticketRepository = new TicketRepository();
     private final DrawRepository drawRepository = new DrawRepository();
@@ -16,13 +18,15 @@ public class TicketService {
     public Ticket createTicket(Long userId, Long drawId, String combination) {
 
         //Получаем тираж по id-проверяем что он существует и ещё активен
-        Draw draw = drawRepository.findById(drawId);
+        Optional<Draw> drawOptional = drawRepository.findById(drawId);
 
-        if (draw == null) {
+        if (drawOptional.isEmpty()) {
             throw new IllegalArgumentException("Тираж не найден");
         }
+        Draw draw = drawOptional.get(); // достаём Draw из Optional
+
         if (!"ACTIVE".equals(draw.status)) {
-            throw new IllegalStateException("Тираж уже завершён, билеты не выдаются");
+            throw new IllegalStateException("Тираж уже завершён, билеты не продаются");
         }
 
         //Нормализуем комбинацию перед сохранением - парсим и сортируем
@@ -41,10 +45,10 @@ public class TicketService {
     }
 
     //проверка всех билетов после розыгрыша тиража
-    public void chekAllTickets(Long DrawId, List<Integer>  winningNumbers) {
+    public void chekAllTickets(Long drawId, List<Integer>  winningNumbers) {
 
         //Получаем все билеты этого тиража
-        List<Ticket> tickets = ticketRepository.findByDrawId(drawId);
+        List<Ticket> tickets = ticketRepository.findByStatus(drawId);
 
         for (Ticket ticket : tickets) {
             List<Integer> ticketNumbers = LotteryService.combinationFromString(ticket.combination);
@@ -64,23 +68,11 @@ public class TicketService {
     public Ticket getTicketResult(Long ticketId) {
 
         //Получаем билет по id чтобы пользователь мог узнать свой результат
-        Ticket ticket = ticketRepository.findById(ticketId);
-        if (ticket == null) {
+        Optional<Ticket> ticket = ticketRepository.findById(ticketId);
+        if (ticket.isEmpty()) {
             throw new IllegalArgumentException("Билет не найден");
         }
-        return ticket;
+
+        return ticket.get(); // достаём Ticket из Optional
     }
-
-    /*/сравнение комбинаций
-    private boolean isWinner(String ticketCombination, String winningCombination) {
-        String[] ticketNums = ticketCombination.split(",");
-        String[] winningNums = winningCombination.split(",");
-
-        java.util.Arrays.sort(ticketNums);
-        java.util.Arrays.sort(winningNums);
-
-        return java.util.Arrays.equals(ticketNums, winningNums);
-    }
-     */
-
 }

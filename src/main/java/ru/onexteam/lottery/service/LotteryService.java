@@ -4,12 +4,8 @@ import ru.onexteam.lottery.model.Draw;
 import ru.onexteam.lottery.model.DrawResult;
 import ru.onexteam.lottery.repository.DrawResultRepository;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.Arrays;
 
 public class LotteryService {
 
@@ -20,10 +16,12 @@ public class LotteryService {
     public DrawResult runDraw(Long drawId) {
 
         //1. Находим тираж
-        Draw draw = drawService.getDrawById(drawId);
-        if (draw == null) {
+        Optional<Draw> drawOptional = drawService.getDrawById(drawId);
+        if (drawOptional.isEmpty()) {
             throw new IllegalArgumentException("Тираж не найден");
         }
+        Draw draw = drawOptional.get(); // достаём Draw из Optional
+
         if (!"ACTIVE".equals(draw.status)) {
             throw new IllegalStateException("Розыгрыш этого тиража уже проведен");
         }
@@ -35,12 +33,11 @@ public class LotteryService {
         String winningCombination = combinationToString(winningNumbers);
 
         //3. Завершение тиража
-        drawService.finishDraw(draw, winningCombination);
+        drawService.finishDraw(draw);
 
         //4. Проверка билетов, WIN/LOSE
         ticketService.chekAllTickets(drawId, winningNumbers);
 
-        //5. Сохраняем + возвращаем результат
         DrawResult result = new DrawResult();
         result.drawId = drawId;
         result.winningCombination = winningCombination;
