@@ -1,6 +1,7 @@
 package ru.onexteam.lottery.security;
 
 import io.javalin.Javalin;
+import io.javalin.http.Context;
 
 public class AuthMiddleware {
 
@@ -11,21 +12,85 @@ public class AuthMiddleware {
     }
 
     public void register(Javalin app) {
-        app.before("/admin/*", ctx -> { // Поменять /admin/* на ссылку по факту
-            String token = ctx.header("Authorization");
-            if(token == null){
-                // Ошибка нужно авторизоваться
-            }else if (!jwtUtil.validateToken(token)) {
-                // Ошибка токен не верный
-            }
 
-        });
-        app.get("/admin/*", ctx -> {
-            String token = ctx.header("Authorization"); // Поменять /admin/* на ссылку по факту
-            Long userId = jwtUtil.extractUserId(token);
-            String userRole = jwtUtil.extractRole(token);
-            // Куда вернуть?
-        });
-        // добавить before-handler
+        /*
+         * Общая схема:
+         *
+         * /api/admin/*   -> только ADMIN
+         * /api/user/*    -> USER и ADMIN
+         */
+
+        // Только админ
+        app.before("/api/admin/*", this::authorizeAdmin);
+
+        // Обычный пользователь (и админ тоже может)
+        app.before("/api/user/*", this::authorizeUser);
     }
+
+    /**
+     * USER или ADMIN
+     */
+    private void authorizeUser(Context ctx) {
+        String token = extractToken(ctx);
+
+        if (token == null) {
+            ctx.status(401).result("Authorization token required");
+            return;
+        }
+
+        if (!jwtUtil.validateToken(token)) {
+            ctx.status(401).result("Invalid token");
+            return;
+        }
+
+        Long userId = jwtUtil.extractUserId(token);
+        String role = jwtUtil.extractRole(token);
+
+        if (!"USER".equals(role) && !"ADMIN".equals(role)) {
+            ctx.status(403).result("Access denied");
+            return;
+        }
+
+        ctx.attribute("userId", userId);
+        ctx.attribute("role", role);
+    }
+
+    /**
+     * Только ADMIN
+     */
+    private void authorizeAdmin(Context ctx) {
+        String token = extractToken(ctx);
+
+        if (token == null) {
+            ctx.status(401).result("Authorization token required");
+            return;
+        }
+
+        if (!jwtUtil.validateToken(token)) {
+            ctx.status(401).result("Invalid token");
+            return;
+        }
+
+        Long userId = jwtUtil.extractUserId(token);
+        String role = jwtUtil.extractRole(token);
+
+        if (!"ADMIN".equals(role)) {
+            ctx.status(403).result("Admin access required");
+            return;
+        }
+
+        ctx.attribute("userId", userId);
+        ctx.attribute("role", role);
+    }
+
+    private String extractToken(Context ctx) {
+        String header = ctx.header("Authorization");
+
+        if (header == null || header.isBlank()) {
+            return null;
+        }
+
+        return header.replace("Bearer ", "").trim();
+    }
+
 }

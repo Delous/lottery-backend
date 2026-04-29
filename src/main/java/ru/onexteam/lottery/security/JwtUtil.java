@@ -1,84 +1,57 @@
 package ru.onexteam.lottery.security;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.SignatureException;
-import io.jsonwebtoken.Claims;
-
 import java.util.Date;
 
 public class JwtUtil {
 
-    private static final String SECRET_KEY = "mySuperSecretKeyForHS256Algorithm12345678910!";
-    // Минимум 32 символа (Изменить ключ)
+    private static final String SECRET_KEY =
+            "mySuperSecretKeyForHS256Algorithm12345678910!";
 
     public String generateToken(Long userId, String role) {
-        String StrUserId = userId.toString();
-        long now = System.currentTimeMillis(); // время выдачи
-        long exp = now + 3600000; // 1 час // на какое кол-во времени?
 
-        String token = Jwts.builder()
-                .setSubject(StrUserId)                 // ID пользователя
-                .claim("role", role)                // Кастомные данные
-                .setIssuedAt(new Date(now))            // Время выдачи
-                .setExpiration(new Date(exp))          // Время истечения
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY) // Подпись
-                .compact();                            // Финальная сборка
-        return token;
+        long now = System.currentTimeMillis();
+        long exp = now + 3600000;
+
+        return Jwts.builder()
+                .setSubject(userId.toString())   // userId здесь
+                .claim("role", role)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(exp))
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .compact();
     }
 
     public boolean validateToken(String token) {
         try {
-            Claims claims = Jwts.parser()
-                    .setSigningKey(SECRET_KEY)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+            getClaims(token);
             return true;
-        } catch (ExpiredJwtException e) {
-            System.out.println("Токен просрочен");
-            return false;
-        } catch (SignatureException e) {
-            System.out.println("Неверная подпись");
-            return false;
-        } catch (MalformedJwtException e) {
-            System.out.println("Некорректный формат токена");
-            return false;
         } catch (JwtException e) {
-            System.out.println("Ошибка валидации: " + e.getMessage());
+            System.out.println("Token invalid: " + e.getMessage());
             return false;
         }
     }
 
     public Long extractUserId(String token) {
         Claims claims = getClaims(token);
-        if(claims != null){
-            try {
-                return Long.parseLong(claims.getId());
-            }catch (NumberFormatException e){
-                System.out.println("Ошибка преобразования userId в Long");
-            }
+        try {
+            return Long.parseLong(claims.getSubject());
+        } catch (NumberFormatException e) {
+            System.out.println("Ошибка преобразования userId");
+            return 0L;
         }
-        return 0L;
     }
 
     public String extractRole(String token) {
         Claims claims = getClaims(token);
-        if(claims != null){
-            return claims.get("role", String.class);
-        }
-        return "";
+        return claims.get("role", String.class);
     }
 
-    private Claims getClaims(String token){
-        try {
-            return Jwts.parser()
-                    .setSigningKey(SECRET_KEY)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-        }catch (JwtException e){
-            System.out.println("Невалидное значение токена");
-            return null;
-        }
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .setSigningKey(SECRET_KEY)
+                .parseClaimsJws(token)
+                .getBody();
     }
+
 }
