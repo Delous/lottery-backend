@@ -11,30 +11,75 @@ public class TicketController {
     public static void register(Javalin app) {
 
         // Получение всех билетов пользователя по id.
-        app.get("/api/me/tickets", ctx -> {
+        app.get("/api/user/me/tickets", ctx -> {
+            // Long userId = ctx.attribute("userId");
             // Из JWT брать id пользователя, который сейчас авторизован.
             // TODO: логика получения билетов для пользователя - ctx.json(ticketService.getUserTickets(userId));
+            ctx.status(501).result("Method getUserTickets not implemented");
         });
 
         // Получение билета по id.
-        app.get("/api/me/tickets/{ticketId}", ctx -> {
-            // TODO: логика получения билета по id - ctx.json(ticketService.getTicket(userId, ticketId));
+        app.get("/api/user/me/tickets/{ticketId}", ctx -> {
+            // Long userId = ctx.attribute("userId");
+
+            try {
+                // long ticketId = Long.parseLong(ctx.pathParam("ticketId"));
+                // TODO: логика получения билета по id - ctx.json(ticketService.getTicket(userId, ticketId));
+                ctx.status(501).result("Method getUserTickets not implemented");
+            } catch (NumberFormatException ex) {
+                ctx.status(400).result("Invalid ticket id");
+            }
         });
 
         // Получение результата билета по id.
-        app.get("/api/me/tickets/{ticketId}/result", ctx -> {
+        app.get("/api/user/me/tickets/{ticketId}/result", ctx -> {
             // TODO: логика получения результата для билета по id - ctx.json(ticketService.getTicketResult(userId, ticketId));
+            // Long userId = ctx.attribute("userId");
+
+            try {
+                long ticketId = Long.parseLong(ctx.pathParam("ticketId"));
+
+                ctx.json(ticketService.getTicketResult(ticketId));
+            } catch (NumberFormatException ex) {
+                ctx.status(400).result("Invalid ticket id");
+            } catch (IllegalArgumentException ex) {
+                ctx.status(404).result(ex.getMessage());
+            }
         });
 
         // Купить билет (роль: пользователь).
         app.post("/api/draws/{drawId}/tickets", ctx -> {
-            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может выкинуть NumberFormatException.
+            Long userId = ctx.attribute("userId");
 
-            // Из JWT брать id пользователя.
+            try {
+                CreateTicketRequest req =
+                        ctx.bodyAsClass(CreateTicketRequest.class);
 
-            // TODO: логика приобретения (создания) билета - ctx.json(ticketService.createTicket(userId, drawId, req));.
+                if (req.drawId == null) {
+                    ctx.status(400).result("drawId is required");
+                    return;
+                }
+
+                // TODO: так как DTO содержит только drawId, комбинацию передаем временно фиксированную. Пока не изменится DTO.
+                String combination = "1,2,3,4,5";
+
+                ctx.status(201).json(
+                        ticketService.createTicket(
+                                userId,
+                                req.drawId,
+                                combination
+                        )
+                );
+            } catch (NumberFormatException ex) {
+                ctx.status(400).result("Invalid draw id");
+
+            } catch (IllegalArgumentException ex) {
+                ctx.status(404).result(ex.getMessage());
+
+            } catch (IllegalStateException ex) {
+                ctx.status(409).result(ex.getMessage());
+            }
         });
-
     }
 
 }

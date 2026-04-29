@@ -2,6 +2,7 @@ package ru.onexteam.lottery.controller;
 
 import io.javalin.Javalin;
 import ru.onexteam.lottery.dto.draw.CreateDrawRequest;
+import ru.onexteam.lottery.model.Draw;
 import ru.onexteam.lottery.service.DrawService;
 
 public class DrawController {
@@ -10,43 +11,75 @@ public class DrawController {
 
     public static void register(Javalin app) {
 
+        // USER
         // Получить список тиражей.
-        // /api/draws?status=active
-        app.get("/api/draws", ctx -> {
+        // /api/user/draws?status=active
+        app.get("/api/user/draws", ctx -> {
             String status = ctx.queryParam("status");
 
             if ("active".equals(status)) {
                 ctx.json(drawService.getActiveDraws());
-                return;
+            } else {
+                ctx.status(400).result("Invalid status");
             }
-
-            // TODO: логика получения всех тиражей - ctx.json(drawService.getAllDraws());
         });
 
         // Получить тираж по id.
-        app.get("/api/draws/{drawId}", ctx -> {
-            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может кинуть NumberFormatException.
+        app.get("/api/user/draws/{drawId}", ctx -> {
+            try {
+                long drawId = Long.parseLong(ctx.pathParam("drawId"));
 
-            // TODO: логика получения тиража по id - ctx.json(drawService.getById(drawId));
+                drawService.getDrawById(drawId)
+                        .ifPresentOrElse(
+                                ctx::json,
+                                () -> ctx.json(404).result("Draw not found")
+                        );
+            } catch (NumberFormatException ex) {
+                ctx.status(400).result("Invalid draw id");
+            }
         });
 
         // Получить результат тиража.
         app.get("/api/draws/{drawId}/result", ctx -> {
-            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может кинуть NumberFormatException.
+            try {
+                long drawId = Long.parseLong(ctx.pathParam("drawId"));
 
-            // TODO: логика получения результата для тиража по его id - ctx.json(drawService.getResult(drawId));
+                drawService.getDrawById(drawId)
+                        .ifPresentOrElse(
+                                draw -> {
+                                    if ("FINISHED".equals(draw.status)) {
+                                        ctx.json(draw);
+                                    } else {
+                                        ctx.status(400).result("Draw is still active");
+                                    }
+                                }, () -> ctx.status(404).result("Draw not found")
+                        );
+            } catch (NumberFormatException ex) {
+                ctx.status(400).result("Invalid draw id");
+            }
         });
 
-        // Создать тираж (роль: админ).
-        app.post("/api/draws", ctx -> {
-            // TODO: логика создания тиража админом.
+        // ADMIN
+        // Создать тираж.
+        app.get("/api/admin/draws", ctx -> {
+            CreateDrawRequest request = ctx.bodyAsClass(CreateDrawRequest.class);
+            Draw draw = drawService.createDraw(request.title);
+            ctx.status(201).json(draw);
         });
 
-        // Закрыть тираж (роль: админ).
-        app.post("/api/draws/{drawId}/close", ctx -> {
-            long drawId = Long.parseLong(ctx.pathParam("drawId")); // Может кинуть NumberFormatException.
+        // Закрыть тираж.
+        app.post("/api/admin/draws/{drawId}/close", ctx -> {
+            try {
+                long drawId = Long.parseLong(ctx.pathParam("drawId"));
 
-            // TODO: при закрытии тиража получение билетов становится невозможным и сразу определяется победная комбинация.
+                drawService.getDrawById(drawId)
+                        .ifPresentOrElse(draw -> {
+                            drawService.finishDraw(draw);
+                            ctx.result("Draw closed");
+                        }, () -> ctx.status(404).result("Draw not found"));
+            } catch (NumberFormatException ex) {
+                ctx.status(400).result("Invalid draw id");
+            }
         });
 
     }
