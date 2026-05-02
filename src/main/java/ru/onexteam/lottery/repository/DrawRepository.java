@@ -3,8 +3,6 @@ package ru.onexteam.lottery.repository;
 import ru.onexteam.lottery.config.DbConfig;
 import ru.onexteam.lottery.model.Draw;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;

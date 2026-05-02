@@ -1,7 +1,6 @@
 package ru.onexteam.lottery.service;
 
 import ru.onexteam.lottery.model.Draw;
-import ru.onexteam.lottery.model.DrawResult;
 import ru.onexteam.lottery.repository.DrawRepository;
 
 import java.util.List;
