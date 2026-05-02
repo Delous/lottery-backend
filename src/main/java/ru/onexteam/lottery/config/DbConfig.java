@@ -22,7 +22,7 @@ public class DbConfig {
 
             properties.load(input);
         } catch (IOException e) {
-            throw new RuntimeException("Не удалось загрузить настройки подключения к БД", e);
+            throw new RuntimeException("Не удалось загрузить настройки базы данных", e);
         }
     }
 
@@ -32,6 +32,10 @@ public class DbConfig {
                 properties.getProperty("db.username"),
                 properties.getProperty("db.password")
         );
+    }
+
+    public static String getProperty(String key) {
+        return properties.getProperty(key);
     }
 
     public static void initialize() {

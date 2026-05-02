@@ -13,7 +13,9 @@ public class TicketRepository extends BaseRepository {
 
     private static final String INSERT_SQL = "insert into tickets (user_id, draw_id, combination, status) values (?, ?, ?, ?)";
     private static final String FIND_BY_ID_SQL = "select id, user_id, draw_id, combination, status from tickets where id = ?";
-    private static final String FIND_BY_STATUS_SQL = "select id, user_id, draw_id, combination, status from tickets where draw_id = ? order by id desc";
+    private static final String FIND_BY_DRAW_ID_SQL = "select id, user_id, draw_id, combination, status from tickets where draw_id = ? order by id desc";
+    private static final String FIND_BY_USER_ID_SQL = "select id, user_id, draw_id, combination, status from tickets where user_id = ? order by id desc";
+    private static final String FIND_BY_USER_ID_AND_ID_SQL = "select id, user_id, draw_id, combination, status from tickets where user_id = ? and id = ?";
     private static final String UPDATE_SQL = """
             update tickets
             set user_id = ?,
@@ -71,14 +73,37 @@ public class TicketRepository extends BaseRepository {
         }
     }
 
-    public List<Ticket> findByStatus(Long drawId) {
+    public List<Ticket> findByDrawId(Long drawId) {
         try (var connection = DbConfig.getConnection();
-             var statement = connection.prepareStatement(FIND_BY_STATUS_SQL)) {
+             var statement = connection.prepareStatement(FIND_BY_DRAW_ID_SQL)) {
 
             statement.setLong(1, drawId);
             return findMany(statement, this::mapRow);
         } catch (SQLException e) {
             throw new RuntimeException("Не удалось найти билеты по id тиража", e);
+        }
+    }
+
+    public List<Ticket> findByUserId(Long userId) {
+        try (var connection = DbConfig.getConnection();
+             var statement = connection.prepareStatement(FIND_BY_USER_ID_SQL)) {
+
+            statement.setLong(1, userId);
+            return findMany(statement, this::mapRow);
+        } catch (SQLException e) {
+            throw new RuntimeException("Не удалось найти билеты по id пользователя", e);
+        }
+    }
+
+    public Optional<Ticket> findByUserIdAndId(Long userId, Long id) {
+        try (var connection = DbConfig.getConnection();
+             var statement = connection.prepareStatement(FIND_BY_USER_ID_AND_ID_SQL)) {
+
+            statement.setLong(1, userId);
+            statement.setLong(2, id);
+            return findOne(statement, this::mapRow);
+        } catch (SQLException e) {
+            throw new RuntimeException("Не удалось найти билет по id пользователя и id билета", e);
         }
     }
 

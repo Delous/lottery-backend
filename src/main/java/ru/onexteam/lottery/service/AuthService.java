@@ -5,41 +5,56 @@ import ru.onexteam.lottery.repository.UserRepository;
 import ru.onexteam.lottery.security.JwtUtil;
 import ru.onexteam.lottery.security.PasswordUtil;
 
-
 import java.util.Optional;
 
 public class AuthService {
 
     private final UserRepository userRepository = new UserRepository();
     private final PasswordUtil passwordUtil = new PasswordUtil();
+    private final JwtUtil jwtUtil = new JwtUtil();
 
-    public String register(String email, String password) { //Метод пытается провести регистрацию
+    public String register(String email, String password) {
+        String normalizedEmail = email.trim().toLowerCase();
 
-        if (userRepository.findByEmail(email).isEmpty()){
-
-            User user = new User();
-            user.email = email;
-            user.password = passwordUtil.hashPassword(password);;
-            user.role = "USER";
-
-            userRepository.save(user);
-
-            return new JwtUtil().generateToken(user.id, user.role);
-        }else {
-            throw new RuntimeException("Пользователь с таким email@ уже существует ");
+        if (userRepository.findByEmail(normalizedEmail).isPresent()) {
+            throw new RuntimeException("Пользователь с таким email уже существует");
         }
+
+        User user = new User();
+        user.email = normalizedEmail;
+        user.password = passwordUtil.hashPassword(password);
+        user.role = "USER";
+
+        userRepository.save(user);
+        return jwtUtil.generateToken(user.id, user.role);
     }
 
-    public String login(String email, String password) { // Метод проверяет email и пароль на вход
-        Optional<User> userOptional = userRepository.findByEmail(email);
-         if(userOptional.isPresent()){
-             if(passwordUtil.verifyPassword(password, userOptional.get().password)){
-                 return new JwtUtil().generateToken(userOptional.get().id, userOptional.get().role);
-             }else {
-                 throw new RuntimeException("Неверный пароль");
-             }
-         }else {
-             throw new RuntimeException("Пользователя с таким email@ не существует");
-         }
+    public String login(String email, String password) {
+        Optional<User> userOptional = userRepository.findByEmail(email.trim().toLowerCase());
+
+        if (userOptional.isEmpty() || !passwordUtil.verifyPassword(password, userOptional.get().password)) {
+            throw new RuntimeException("Неверный email или пароль");
+        }
+
+        User user = userOptional.get();
+        return jwtUtil.generateToken(user.id, user.role);
+    }
+
+    public void ensureAdmin(String email, String password) {
+        if (email == null || email.isBlank() || password == null || password.isBlank()) {
+            return;
+        }
+
+        String normalizedEmail = email.trim().toLowerCase();
+        if (userRepository.findByEmail(normalizedEmail).isPresent()) {
+            return;
+        }
+
+        User user = new User();
+        user.email = normalizedEmail;
+        user.password = passwordUtil.hashPassword(password);
+        user.role = "ADMIN";
+
+        userRepository.save(user);
     }
 }

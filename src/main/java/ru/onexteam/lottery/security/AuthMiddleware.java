@@ -2,6 +2,8 @@ package ru.onexteam.lottery.security;
 
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import io.javalin.http.ForbiddenResponse;
+import io.javalin.http.UnauthorizedResponse;
 
 public class AuthMiddleware {
 
@@ -12,71 +14,38 @@ public class AuthMiddleware {
     }
 
     public void register(Javalin app) {
-
-        /*
-         * Общая схема:
-         *
-         * /api/admin/*   -> только ADMIN
-         * /api/user/*    -> USER и ADMIN
-         */
-
-        // Только админ
         app.before("/api/admin/*", this::authorizeAdmin);
-
-        // Обычный пользователь (и админ тоже может)
         app.before("/api/user/*", this::authorizeUser);
     }
 
-    /**
-     * USER или ADMIN
-     */
     private void authorizeUser(Context ctx) {
-        String token = extractToken(ctx);
-
-        if (token == null) {
-            ctx.status(401).result("Authorization token required");
-            return;
-        }
-
-        if (!jwtUtil.validateToken(token)) {
-            ctx.status(401).result("Invalid token");
-            return;
-        }
-
-        Long userId = jwtUtil.extractUserId(token);
-        String role = jwtUtil.extractRole(token);
-
-        if (!"USER".equals(role) && !"ADMIN".equals(role)) {
-            ctx.status(403).result("Access denied");
-            return;
-        }
-
-        ctx.attribute("userId", userId);
-        ctx.attribute("role", role);
+        authorize(ctx, false);
     }
 
-    /**
-     * Только ADMIN
-     */
     private void authorizeAdmin(Context ctx) {
+        authorize(ctx, true);
+    }
+
+    private void authorize(Context ctx, boolean adminOnly) {
         String token = extractToken(ctx);
 
         if (token == null) {
-            ctx.status(401).result("Authorization token required");
-            return;
+            throw new UnauthorizedResponse("Требуется токен авторизации");
         }
 
         if (!jwtUtil.validateToken(token)) {
-            ctx.status(401).result("Invalid token");
-            return;
+            throw new UnauthorizedResponse("Недействительный токен");
         }
 
         Long userId = jwtUtil.extractUserId(token);
         String role = jwtUtil.extractRole(token);
 
-        if (!"ADMIN".equals(role)) {
-            ctx.status(403).result("Admin access required");
-            return;
+        if (adminOnly && !"ADMIN".equals(role)) {
+            throw new ForbiddenResponse("Требуется доступ администратора");
+        }
+
+        if (!adminOnly && !"USER".equals(role) && !"ADMIN".equals(role)) {
+            throw new ForbiddenResponse("Доступ запрещен");
         }
 
         ctx.attribute("userId", userId);
@@ -90,7 +59,10 @@ public class AuthMiddleware {
             return null;
         }
 
-        return header.replace("Bearer ", "").trim();
-    }
+        if (!header.startsWith("Bearer ")) {
+            return null;
+        }
 
+        return header.substring("Bearer ".length()).trim();
+    }
 }

@@ -1,1 +1,1 @@
-# lottery-backend
+# Backend лотерейного сервиса

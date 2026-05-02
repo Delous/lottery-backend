@@ -10,69 +10,61 @@ import java.util.Optional;
 
 public class TicketService {
 
-
     private final TicketRepository ticketRepository = new TicketRepository();
     private final DrawRepository drawRepository = new DrawRepository();
 
-    //создание билета
-    public Ticket createTicket(Long userId, Long drawId, String combination) {
+    public Ticket createTicket(Long userId, Long drawId) {
+        if (userId == null) {
+            throw new IllegalStateException("Требуется авторизованный пользователь");
+        }
 
-        //Получаем тираж по id-проверяем что он существует и ещё активен
         Optional<Draw> drawOptional = drawRepository.findById(drawId);
 
         if (drawOptional.isEmpty()) {
             throw new IllegalArgumentException("Тираж не найден");
         }
-        Draw draw = drawOptional.get(); // достаём Draw из Optional
 
+        Draw draw = drawOptional.get();
         if (!"ACTIVE".equals(draw.status)) {
-            throw new IllegalStateException("Тираж уже завершён, билеты не продаются");
+            throw new IllegalStateException("Тираж уже завершен");
         }
-
-        //Нормализуем комбинацию перед сохранением - парсим и сортируем
-        List<Integer> numbers = LotteryService.combinationFromString(combination);
-        String normalizedCombination = LotteryService.combinationToString(numbers);
 
         Ticket ticket = new Ticket();
         ticket.userId = userId;
         ticket.drawId = drawId;
-        ticket.combination = combination;
+        ticket.combination = LotteryService.combinationToString(LotteryService.generateCombination());
         ticket.status = "PENDING";
 
-        //Сохраняем новый билет с комбинацией пользователя и статусом "PENDING"
         ticketRepository.save(ticket);
         return ticket;
     }
 
-    //проверка всех билетов после розыгрыша тиража
-    public void chekAllTickets(Long drawId, List<Integer>  winningNumbers) {
+    public List<Ticket> getUserTickets(Long userId) {
+        return ticketRepository.findByUserId(userId);
+    }
 
-        //Получаем все билеты этого тиража
-        List<Ticket> tickets = ticketRepository.findByStatus(drawId);
+    public Ticket getUserTicket(Long userId, Long ticketId) {
+        return ticketRepository.findByUserIdAndId(userId, ticketId)
+                .orElseThrow(() -> new IllegalArgumentException("Билет не найден"));
+    }
+
+    public void checkAllTickets(Long drawId, List<Integer> winningNumbers) {
+        List<Ticket> tickets = ticketRepository.findByDrawId(drawId);
 
         for (Ticket ticket : tickets) {
             List<Integer> ticketNumbers = LotteryService.combinationFromString(ticket.combination);
-
-            if (ticketNumbers.equals(winningNumbers)) {
-                ticket.status = "WIN";
-            } else {
-                ticket.status = "LOSE";
-            }
-
-            //Обновляем статус каждого билета "WIN" или "LOSE"
+            ticket.status = ticketNumbers.equals(winningNumbers) ? "WIN" : "LOSE";
             ticketRepository.update(ticket);
         }
     }
 
-    //получить результат конкретного билета
-    public Ticket getTicketResult(Long ticketId) {
+    public Ticket getTicketResult(Long userId, Long ticketId) {
+        Ticket ticket = getUserTicket(userId, ticketId);
 
-        //Получаем билет по id чтобы пользователь мог узнать свой результат
-        Optional<Ticket> ticket = ticketRepository.findById(ticketId);
-        if (ticket.isEmpty()) {
-            throw new IllegalArgumentException("Билет не найден");
+        if ("PENDING".equals(ticket.status)) {
+            throw new IllegalStateException("Результат билета пока недоступен");
         }
 
-        return ticket.get(); // достаём Ticket из Optional
+        return ticket;
     }
 }
