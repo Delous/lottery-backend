@@ -54,7 +54,7 @@ public class App {
                     ? -1
                     : TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt);
 
-            accessLog.info("{} {} -> {} {} ms", ctx.method(), requestPath(ctx.matchedPath(), ctx.path()), ctx.statusCode(), elapsedMs);
+            accessLog.info("{} {} -> {} {} ms{}", ctx.method(), ctx.path(), ctx.statusCode(), elapsedMs, errorText(ctx));
         });
 
         app.exception(HttpResponseException.class, (ex, ctx) ->
@@ -64,9 +64,20 @@ public class App {
             log.error("Unhandled exception while processing {} {}", ctx.method(), ctx.path(), ex);
             ctx.status(500).result("Internal server error");
         });
+
+        app.error(404, ctx -> ctx.result("Route not found: " + ctx.path()));
     }
 
-    private static String requestPath(String matchedPath, String path) {
-        return matchedPath == null || matchedPath.isBlank() ? path : matchedPath;
+    private static String errorText(io.javalin.http.Context ctx) {
+        if (ctx.statusCode() < 400) {
+            return "";
+        }
+
+        String result = ctx.result();
+        if (result == null || result.isBlank()) {
+            return "";
+        }
+
+        return " error=\"" + result.replace("\r", " ").replace("\n", " ").replace("\"", "'") + "\"";
     }
 }
