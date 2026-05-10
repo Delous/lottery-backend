@@ -4,76 +4,70 @@ import ru.onexteam.lottery.model.Draw;
 import ru.onexteam.lottery.model.DrawResult;
 import ru.onexteam.lottery.repository.DrawResultRepository;
 
-import java.util.*;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class LotteryService {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final DrawService drawService = new DrawService();
     private final TicketService ticketService = new TicketService();
     private final DrawResultRepository drawResultRepository = new DrawResultRepository();
 
     public DrawResult runDraw(Long drawId) {
-
-        //1. Находим тираж
         Optional<Draw> drawOptional = drawService.getDrawById(drawId);
         if (drawOptional.isEmpty()) {
             throw new IllegalArgumentException("Тираж не найден");
         }
-        Draw draw = drawOptional.get(); // достаём Draw из Optional
 
+        Draw draw = drawOptional.get();
         if (!"ACTIVE".equals(draw.status)) {
-            throw new IllegalStateException("Розыгрыш этого тиража уже проведен");
+            throw new IllegalStateException("Тираж уже завершен");
         }
 
-        //2. Генерация выигрышной комбинации
         List<Integer> winningNumbers = generateCombination();
-
-        //В БД и модель сохраняем строкой
-        String winningCombination = combinationToString(winningNumbers);
-
-        //3. Завершение тиража
-        drawService.finishDraw(draw);
-
-        //4. Проверка билетов, WIN/LOSE
-        ticketService.chekAllTickets(drawId, winningNumbers);
-
         DrawResult result = new DrawResult();
         result.drawId = drawId;
-        result.winningCombination = winningCombination;
+        result.winningCombination = combinationToString(winningNumbers);
 
-        //Сохраняем итог розыгрыша id тиража и выигрышную комбинацию
+        drawService.finishDraw(draw);
+        ticketService.checkAllTickets(drawId, winningNumbers);
         drawResultRepository.save(result);
+
         return result;
     }
 
-    //Генерация 6 уникальных чисел от 1 до 49
-    private List<Integer> generateCombination() {
+    public static List<Integer> generateCombination() {
         List<Integer> numbers = new ArrayList<>();
-        Random random = new Random();
 
         while (numbers.size() < 6) {
-            int num = random.nextInt(49) + 1;
-            if (!numbers.contains(num)) {
-                numbers.add(num);
+            int number = RANDOM.nextInt(49) + 1;
+            if (!numbers.contains(number)) {
+                numbers.add(number);
             }
         }
+
         Collections.sort(numbers);
         return numbers;
     }
 
-    //Список - строка для БД: [5, 12, 23] → "5,12,23"
-    static String combinationToString(List<Integer> combination) {
+    public static String combinationToString(List<Integer> combination) {
         return combination.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
     }
 
-    //Строка - список для логики: "5,12,23" → [5, 12, 23]
-    static List<Integer> combinationFromString(String combination) {
+    public static List<Integer> combinationFromString(String combination) {
         return Arrays.stream(combination.split(","))
+                .map(String::trim)
                 .map(Integer::parseInt)
-                .sorted() // числовая сортировка
+                .sorted()
                 .collect(Collectors.toList());
     }
 }

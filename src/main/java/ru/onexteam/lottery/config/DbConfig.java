@@ -22,16 +22,24 @@ public class DbConfig {
 
             properties.load(input);
         } catch (IOException e) {
-            throw new RuntimeException("Не удалось загрузить настройки подключения к БД", e);
+            throw new RuntimeException("Не удалось загрузить настройки базы данных", e);
         }
     }
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(
-                properties.getProperty("db.url"),
-                properties.getProperty("db.username"),
-                properties.getProperty("db.password")
+                getProperty("db.url"),
+                getProperty("db.username"),
+                getProperty("db.password")
         );
+    }
+
+    public static String getProperty(String key) {
+        return System.getenv().getOrDefault(toEnvName(key), properties.getProperty(key));
+    }
+
+    private static String toEnvName(String key) {
+        return key.toUpperCase().replace('.', '_');
     }
 
     public static void initialize() {

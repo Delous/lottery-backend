@@ -1,0 +1,40 @@
+<configuration>
+    <property name="APP_LOG_LEVEL" value="${APP_LOG_LEVEL:-INFO}"/>
+    <property name="ACCESS_LOG_LEVEL" value="${ACCESS_LOG_LEVEL:-INFO}"/>
+    <property name="JAVALIN_LOG_LEVEL" value="${JAVALIN_LOG_LEVEL:-WARN}"/>
+    <property name="JETTY_LOG_LEVEL" value="${JETTY_LOG_LEVEL:-WARN}"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/lottery-backend.log</file>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/lottery-backend.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>14</maxHistory>
+            <totalSizeCap>256MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <logger name="io.javalin" level="${JAVALIN_LOG_LEVEL}"/>
+    <logger name="org.eclipse.jetty" level="${JETTY_LOG_LEVEL}"/>
+
+    <logger name="ru.onexteam.lottery.http.AccessLog" level="${ACCESS_LOG_LEVEL}" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <root level="${APP_LOG_LEVEL}">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>

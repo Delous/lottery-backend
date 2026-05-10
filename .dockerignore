@@ -1,0 +1,7 @@
+target/
+logs/
+.git/
+.idea/
+.vscode/
+*.iml
+dependency-reduced-pom.xml

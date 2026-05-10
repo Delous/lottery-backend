@@ -6,7 +6,7 @@ import ru.onexteam.lottery.repository.UserRepository;
 
 public class RepositorySmokeTest {
 
-    // Тест работы репозитория и подключения к БД
+    // Тест работы репозитория и подключения к БД.
     public static void main(String[] args) {
         DbConfig.initialize();
 
@@ -23,9 +23,9 @@ public class RepositorySmokeTest {
         var savedUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден после сохранения"));
 
-        System.out.println("Smoke test успешно пройден");
-        System.out.println("Сохраненный user id: " + savedUser.id);
-        System.out.println("Сохраненный user email: " + savedUser.email);
+        System.out.println("Проверка репозитория успешно пройдена");
+        System.out.println("Сохраненный id пользователя: " + savedUser.id);
+        System.out.println("Сохраненный email пользователя: " + savedUser.email);
         System.out.println("Сохраненная роль: " + savedUser.role);
     }
 }
